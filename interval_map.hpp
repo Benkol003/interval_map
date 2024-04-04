@@ -1,4 +1,5 @@
 #include <map>
+#include <memory>
 
 template<typename K, typename V>
 struct interval_map {
@@ -28,35 +29,29 @@ public:
         }else{
             //starting index
             typename std::map<K,V>::iterator keyBeginNextRange = m_map.upper_bound(keyBegin);
-            V* keyEndVal(nullptr); //wasnt sure if no-arg constructor was available - c++ will initialise local class instances. would be nice if i could use std::unique_ptr
+            std::unique_ptr<V> keyEndVal(nullptr); //wasnt sure if no-arg constructor was available - c++ will initialise local class instances. would be nice if i could use std::unique_ptr
             if(keyBeginNextRange == m_map.begin() ){
                 if(!(val==m_valBegin)) m_map.emplace(keyBegin,val);//iterators arent invalidated by inserts
-                delete keyEndVal;
-                keyEndVal = new V(m_valBegin);
+                keyEndVal = std::make_unique<V>(m_valBegin);
             }else{
                 typename std::map<K,V>::iterator keyBeginPrevRange = (--keyBeginNextRange)++;
                 //keyEndVal - is value for any ranges that extend past keyEnd
                 if(keyBeginPrevRange->first < keyBegin){
-                    delete keyEndVal;
-                    keyEndVal = new V(keyBeginPrevRange->second);
+                    keyEndVal = std::make_unique<V>(keyBeginPrevRange->second);
                     if(!(*keyEndVal==val)) m_map.emplace(keyBegin,val);
                 }else{ 
                     //now keyBeginPrevRange = keyBegin
                      if(keyBeginPrevRange->second == val){
-                        delete keyEndVal;
-                        keyEndVal = new V(val); //value before keyBeginPrevRange has to be different to value after
+                        keyEndVal = std::make_unique<V>(val); //value before keyBeginPrevRange has to be different to value after
                      }else{
-                        delete keyEndVal;
-                        keyEndVal = new V(keyBeginPrevRange->second);
-                        V* valuePrev = nullptr;
+                        keyEndVal = std::make_unique<V>(keyBeginPrevRange->second);
+                        std::unique_ptr<V> valuePrev(nullptr);
                         if(keyBeginPrevRange==m_map.begin()){
-                            delete valuePrev;
-                            valuePrev = new V(m_valBegin);
+                            valuePrev = std::make_unique<V>(m_valBegin);
                         }
                         else{
                             typename std::map<K,V>::iterator actualPrev = (--keyBeginPrevRange)++;
-                            delete valuePrev;
-                            valuePrev = new V(actualPrev->second); 
+                            valuePrev = std::make_unique<V>(actualPrev->second); 
                         }
                         if(*valuePrev==val){
                             m_map.erase(keyBeginPrevRange);
@@ -65,16 +60,15 @@ public:
                             //reuse iterator rather than look up again
                             keyBeginPrevRange->second=val;
                         }
-                     }
+                    }
                 }
 
             }
 
             //walk upto keyEnd
             while(keyBeginNextRange != m_map.end() && keyBeginNextRange->first<keyEnd){
-                typename std::map<K,V>::iterator erase_i = keyBeginNextRange;
-                delete keyEndVal;
-                keyEndVal=new V(keyBeginNextRange->second);
+                typename std::map<K, V>::iterator erase_i = keyBeginNextRange;
+                keyEndVal=std::make_unique<V>(keyBeginNextRange->second);
                 ++keyBeginNextRange;
                 m_map.erase(erase_i);
             }
@@ -91,7 +85,7 @@ public:
                 }
             }
         }
-	}
+    }
 
 	// look-up of the value associated with key
 	V const& operator[]( K const& key ) const {
