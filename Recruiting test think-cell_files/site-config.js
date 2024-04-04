@@ -1,0 +1,1 @@
+{const t=document.documentElement;t.setAttribute("javascript","enabled"),navigator.platform.indexOf("Mac")==0&&t.setAttribute("platform","mac"),(navigator.userAgent.indexOf("MSIE ")!=-1||navigator.userAgent.indexOf("Trident/")!=-1)&&t.setAttribute("useragent","ie"),document.referrer.match(/https:\/\/[^\/]+\.think-cell\.com(\/|$)/i)&&t.setAttribute("onsitenavigation","true")}
